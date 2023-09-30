@@ -23,8 +23,19 @@ plugins {
     id "org.jetbrains.intellij" version "1.15.0"
 }
 
+//apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+// NOTE: For JitPack to allow a custom group (ie, `com.chriscarini.jetbrains`, and not the default of
+// 'com.github.ChrisCarini') we need to setup a DNS TXT record (`dig txt git.jetbrains.chriscarini.com`).
+//group = 'com.github.ChrisCarini'
 group properties("libraryGroup")
+
 version properties("libraryVersion")
+ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
+
+sourceCompatibility = properties("javaVersion")
+targetCompatibility = properties("javaVersion")
 
 /**
  * #####################################################################################################################
@@ -56,9 +67,9 @@ intellij {
  */
 
 
+// Configure CHANGELOG.md - https://github.com/JetBrains/gradle-changelog-plugin
+// Note: Use all the defaults.
 changelog {
-    version = properties("libraryVersion")
-    header = "[${-> version.get()}] - ${new Date().format('yyyy-MM-dd')}"
 }
 
 idea {
@@ -149,6 +160,8 @@ publishing {
 }
 
 signing {
+    required { isReleaseVersion && gradle.taskGraph.hasTask("publish") }
+
     sign configurations.archives
 
     sign publishing.publications.mavenJava

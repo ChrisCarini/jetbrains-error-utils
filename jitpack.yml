@@ -1,0 +1,10 @@
+# https://docs.jitpack.io/building/#java-version
+jdk:
+  - 17-jbr-jcef
+before_install:
+  # https://stackoverflow.com/questions/70415814/how-do-i-set-up-a-custom-jdk-build-in-sdkman
+  # https://github.com/JetBrains/JetBrainsRuntime/releases/tag/jbr-release-17.0.8.1b1063.1
+  - wget --no-verbose https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-17.0.8.1-linux-x64-b1063.1.tar.gz
+  - echo "Un-taring..." ; tar -xf jbr_jcef-17.0.8.1-linux-x64-b1063.1.tar.gz
+  - echo "Install SDK..." ; sdk install java 17-jbr-jcef $(realpath jbr_jcef-17.0.8.1-linux-x64-b1063.1/)
+  - sdk use java 17-jbr-jcef
