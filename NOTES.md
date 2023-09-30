@@ -35,6 +35,9 @@
     - Uses GitHub API w/ scrambled GH token; will comment on existing issue if one already exists.
 - [ml-in-programming/ArchitectureReloaded](https://cs.github.com/ml-in-programming/ArchitectureReloaded/blob/287cee7752a1718ba6164c3cfb1ebf60d97c405f/src/main/java/org/jetbrains/research/groups/ml_methods/error_reporting/AnonymousFeedback.java)
     - Uses GitHub API w/ scrambled GH token; will comment on existing issue if one already exists.
+- [karollewandowski/aem-intellij-plugin](https://github.com/karollewandowski/aem-intellij-plugin/blob/master/src/main/kotlin/co/nums/intellij/aem/errorreports/GitHubErrorReportSubmitter.kt)
+    - Really neat! de-dups issues via hash; uses GitHub API w/ encrypted GH token; will comment on existing issue if one already exists.
+    - Created by JB employee in OSS plugin
 
 ### Jira
 
