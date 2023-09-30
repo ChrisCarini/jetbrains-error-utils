@@ -21,6 +21,12 @@ public final class Messages {
     private Messages() {
     }
 
+    /**
+     * Gets a localized message from the bundle.
+     * @param key the key to look up
+     * @param params the parameters to use in the message
+     * @return the localized message
+     */
     public static String message(@NotNull @NonNls @PropertyKey(resourceBundle = BUNDLE) final String key, @NotNull final Object... params) {
         return AbstractBundle.message(getBundle(), key, params);
     }

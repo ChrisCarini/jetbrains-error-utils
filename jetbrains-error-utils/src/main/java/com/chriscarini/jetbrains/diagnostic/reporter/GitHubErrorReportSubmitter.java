@@ -28,6 +28,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
+/**
+ * Error report submitter for GitHub.
+ */
 public abstract class GitHubErrorReportSubmitter extends ErrorReportSubmitter {
     @NonNls
     private static final String TRIMMED_STACKTRACE_MARKER = "\n\n<TRIMMED STACKTRACE>";
@@ -37,6 +41,10 @@ public abstract class GitHubErrorReportSubmitter extends ErrorReportSubmitter {
         return "\uD83D\uDC1B " + Messages.message("jetbrains.error.utils.github.error.report.submitter.report.action.text");
     }
 
+    /**
+     * Get the GitHub repo URL to submit issues to.
+     * @return GitHub repo URL
+     */
     @NonNls
     abstract public @NotNull String gitHubRepoUrl();
 
