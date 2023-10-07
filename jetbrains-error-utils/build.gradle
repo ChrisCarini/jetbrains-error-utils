@@ -32,7 +32,7 @@ apply plugin: 'maven-publish'
 group properties("libraryGroup")
 
 version properties("libraryVersion")
-ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
+ext.isSnapshot = version.endsWith('-SNAPSHOT')
 
 sourceCompatibility = properties("javaVersion")
 targetCompatibility = properties("javaVersion")
@@ -104,14 +104,9 @@ publishing {
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
-                        url.set("$repoUrl/blob/master/LICENSE")
+                        url.set("$repoUrl/blob/main/LICENSE")
                         distribution.set("repo")
                     }
-                }
-
-                issueManagement {
-                    system.set("GitHub")
-                    url.set("$repoUrl/issues")
                 }
 
                 developers {
@@ -128,6 +123,16 @@ publishing {
                     connection.set("scm:git:${repoUrl}.git")
                     developerConnection.set(connection)
                 }
+
+                issueManagement {
+                    system.set("GitHub Issues")
+                    url.set("$repoUrl/issues")
+                }
+
+                ciManagement {
+                    system.set('GitHub Actions')
+                    url.set("$repoUrl/actions")
+                }
             }
         }
     }
@@ -141,29 +146,37 @@ publishing {
 //            name = "osshr"
 //        }
 
-        def isSnapshot = version.endsWith('-SNAPSHOT')
         maven {
             name = 'ChrisCarini_LocalMavenRepo'
 
-            url = isSnapshot ?
-                    layout.buildDirectory.dir('repos/snapshots') :
-                    layout.buildDirectory.dir('repos/releases')
+            def snapshotsRepoUrl = layout.buildDirectory.dir('repos/snapshots')
+            def releasesRepoUrl = layout.buildDirectory.dir('repos/releases')
+            url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
         }
-//        maven {
-//            name = "osshr"
-//            url = isSnapshot ?
-//                    "https://s01.oss.sonatype.org/content/repositories/snapshots/" :
-//                    "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-//            credentials(PasswordCredentials)
-//        }
+        if (System.getenv("OSSRH_MAVEN_USERNAME")) {
+            maven {
+                name = "OSSRH"
+
+                def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
+                credentials {
+                    username = System.getenv("OSSRH_MAVEN_USERNAME")
+                    password = System.getenv("OSSRH_MAVEN_PASSWORD")
+                }
+            }
+        }
     }
 }
 
 signing {
-    required { isReleaseVersion && gradle.taskGraph.hasTask("publish") }
+    useGpgCmd()
+
+    if (System.getenv('PGP_KEY')) {
+        useInMemoryPgpKeys(System.getenv('PGP_KEY'), System.getenv('PGP_PWD'))
+    }
 
     sign configurations.archives
-
     sign publishing.publications.mavenJava
 }
 
