@@ -6,8 +6,6 @@
 ### Added
 
 ### Changed
-- Upgrading IntelliJ from 2023.3.2 to 2023.3.3
-- Upgrading IntelliJ from 2023.2.2 to 2023.3.2
 
 ### Deprecated
 
@@ -17,6 +15,18 @@
 
 ### Security
 
-## [0.0.1] - 2022-08-28
+## [0.0.3-SNAPSHOT] - 2023-12-28
+### Changed
+- Upgrading IntelliJ from 2023.3.3 to 2023.3.4
+- Upgrading IntelliJ from 2023.3.2 to 2023.3.3
+
+### Fixed
+- Remove cast to `ApplicationInfoImpl`
+
+## [0.0.2-SNAPSHOT] - 2023-12-27
+### Added
+- Upgrading IntelliJ from 2023.2.2 to 2023.3.2
+
+## [0.0.1-SNAPSHOT] - 2022-08-28
 ### Added
 - Initial Revision. Laying the foundation.
