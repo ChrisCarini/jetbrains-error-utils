@@ -6,6 +6,7 @@
 ### Added
 
 ### Changed
+- Upgrading IntelliJ from 2024.1.1 to 2024.1.2
 - Upgrading IntelliJ from 2024.1 to 2024.1.1
 - Upgrading IntelliJ from 2023.3.6 to 2024.1.0
 - Upgrading IntelliJ from 2023.3.5 to 2023.3.6
