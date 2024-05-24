@@ -68,6 +68,11 @@
 - [pgorsira/intellij-solidity](https://cs.github.com/pgorsira/intellij-solidity/blob/ff6c247b512493a4addcd5c52bdad98745eac626/src/main/kotlin/me/serce/solidity/ide/errors.kt?q=com.intellij.openapi.diagnostic.ErrorReportSubmitter+github)
     - Will not send for dev / snapshot releases
 
+#### Blog Post with Example
+
+- https://www.plugin-dev.com/intellij/general/error-reporting/
+- https://github.com/jansorg/intellij-error-reporting/blob/master/src/main/java/dev/ja/samples/errorReporting/SentryErrorReporter.java
+
 ## JetBrains Marketplace Exception Analyzer
 ```
 2024-03-11 - Anna Maltceva - :jetbrains: - 9:39 AM
