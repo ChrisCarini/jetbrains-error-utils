@@ -67,3 +67,33 @@
 - [FirstTimeInForever/intellij-pdf-viewer](https://cs.github.com/FirstTimeInForever/intellij-pdf-viewer/blob/350b5676966732fac0a416fd8e4f8d8195a3474b/plugin/src/main/kotlin/com/firsttimeinforever/intellij/pdf/viewer/report/PdfErrorReportSubmitter.kt?q=com.intellij.openapi.diagnostic.ErrorReportSubmitter+sentry)
 - [pgorsira/intellij-solidity](https://cs.github.com/pgorsira/intellij-solidity/blob/ff6c247b512493a4addcd5c52bdad98745eac626/src/main/kotlin/me/serce/solidity/ide/errors.kt?q=com.intellij.openapi.diagnostic.ErrorReportSubmitter+github)
     - Will not send for dev / snapshot releases
+
+## JetBrains Marketplace Exception Analyzer
+```
+2024-03-11 - Anna Maltceva - :jetbrains: - 9:39 AM
+Dear Plugin Developers,
+Exception Analyser beta version is now available on JetBrains Marketplace!
+How It Works:
+This new feature allows for exception reporting directly within JetBrains Marketplace. When users encounter an exception, they'll see the IDE Internal Errors dialog, offering them the option to report to the third-party plugin. This report will then be added to your exceptions listing for the plugin on JetBrains Marketplace. To see the Exception Analyzer report, navigate to your plugin's dashboard and select the Exceptions tab (see the screenshot attached).
+How to Gain Early Access:
+Express Your Interest:
+Please send the email address associated with your Marketplace account via direct message, enabling us to activate this feature.
+2. Implement Exception Reporting in Your Plugin:
+Add the following entry to your plugin.xml file to enable the JetBrains Marketplace error handler:
+<idea-plugin>
+   <!--  ...  -->
+  
+   <extensions defaultExtensionNs="com.intellij">
+       <errorHandler implementation="com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter"/>
+   </extensions>
+</idea-plugin>
+If you're using the IntelliJ Platform Plugin Template, update your gradle.properties file with the following configuration:
+pluginSinceBuild = 233
+pluginUntilBuild = 241.*
+platformType = IC
+platformVersion = 2023.3.4
+We welcome any feedback on this feature and may reach out to you for further insights. Should you encounter any issues, please report them to our issue tracker: https://youtrack.jetbrains.com/issues/MP.
+Looking forward to your participation and feedback!
+```
+
+- https://youtrack.jetbrains.com/issue/MP-6442/Make-JetBrainsMarketplaceErrorReportSubmitter-public-to-allow-extension
