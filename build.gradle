@@ -15,12 +15,17 @@ plugins {
     // To publish to maven, including maven local: https://www.jetbrains.com/help/idea/add-a-gradle-library-to-the-maven-repository.html#publish
     id 'maven-publish'
 
+    // To fully automate publishing to OSSRH: https://github.com/gradle-nexus/publish-plugin
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+
     id 'signing'
 
     id 'org.jetbrains.changelog' version '2.2.0'
 
     // Add IJ gradle plugin in order to allow us to pull a dependency on IntelliJ platform.
     id "org.jetbrains.intellij" version "1.17.3"
+
+    id 'jacoco'
 }
 
 //apply plugin: 'maven'
@@ -50,6 +55,11 @@ targetCompatibility = properties("javaVersion")
 // Disable all Gradle Tasks for the gradle-intellij-plugin as we only use the plugin for the dependencies
 project.gradle.taskGraph.whenReady { graph ->
     graph.allTasks.findAll { it.group == 'intellij' }.each {
+        // Skip the initializeIntelliJPlugin task as it is required for this library's tests to work
+        if (it.name == 'initializeIntelliJPlugin') {
+            logger.info('Skipping disabling \'org.jetbrains.intellij\' task: ' + it.name)
+            return
+        }
         logger.info('Disabling \'org.jetbrains.intellij\' task: ' + it.name)
         it.enabled = false
     }
@@ -58,6 +68,7 @@ project.gradle.taskGraph.whenReady { graph ->
 intellij {
     version.set(properties("platformVersion"))
     downloadSources.set(properties("platformDownloadSources").toBoolean())
+    plugins.set(['org.jetbrains.plugins.github']) // Needed for the AuthenticatedGitHubErrorReportSubmitter
 }
 /**
  * END ABOVE SECTION TAKEN FROM https://github.com/intellij-dlanguage/intellij-dlanguage (`:utils`, `:errorreporting`, and `:debugger` modules).
@@ -66,10 +77,12 @@ intellij {
  * #####################################################################################################################
  */
 
+final String repoUrl = "https://github.com/ChrisCarini/jetbrains-error-utils"
 
 // Configure CHANGELOG.md - https://github.com/JetBrains/gradle-changelog-plugin
 // Note: Use all the defaults.
 changelog {
+    repositoryUrl = repoUrl
 }
 
 idea {
@@ -83,71 +96,59 @@ repositories {
 }
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = group
-            artifactId = rootProject.name
-            version = version
+    publications.create("mavenJava", MavenPublication) {
+        groupId = group
+        artifactId = rootProject.name
+        version = version
 
-            from components.java
-            withoutBuildIdentifier()
+        from components.java
+        withoutBuildIdentifier()
 
-            pom {
-                final String repoUrl = "https://github.com/ChrisCarini/jetbrains-error-utils"
+        pom {
+            name.set("JetBrains Error Utilities")
+            description.set("A java library, intended to be consumed by plugins for JetBrains IDEs, providing utilities for handling errors from plugins.")
+            url.set(repoUrl)
+            inceptionYear.set("2022")
+            packaging = "jar"
 
-                name.set("JetBrains Error Utilities")
-                description.set("A java library, intended to be consumed by plugins for JetBrains IDEs, providing utilities for handling errors from plugins.")
+            licenses {
+                license {
+                    name.set("The Apache License, Version 2.0")
+                    url.set("$repoUrl/blob/main/LICENSE")
+                    distribution.set("repo")
+                }
+            }
+
+            developers {
+                developer {
+                    id.set("ChrisCarini")
+                    name.set("Chris Carini")
+                    email.set("6374067+ChrisCarini@users.noreply.github.com")
+                    url.set("https://github.com/ChrisCarini")
+                }
+            }
+
+            scm {
                 url.set(repoUrl)
-                inceptionYear.set("2022")
-                packaging = "jar"
+                connection.set("scm:git:${repoUrl}.git")
+                developerConnection.set(connection)
+            }
 
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("$repoUrl/blob/main/LICENSE")
-                        distribution.set("repo")
-                    }
-                }
+            issueManagement {
+                system.set("GitHub Issues")
+                url.set("$repoUrl/issues")
+            }
 
-                developers {
-                    developer {
-                        id.set("ChrisCarini")
-                        name.set("Chris Carini")
-                        email.set("6374067+ChrisCarini@users.noreply.github.com")
-                        url.set("https://github.com/ChrisCarini")
-                    }
-                }
-
-                scm {
-                    url.set(repoUrl)
-                    connection.set("scm:git:${repoUrl}.git")
-                    developerConnection.set(connection)
-                }
-
-                issueManagement {
-                    system.set("GitHub Issues")
-                    url.set("$repoUrl/issues")
-                }
-
-                ciManagement {
-                    system.set('GitHub Actions')
-                    url.set("$repoUrl/actions")
-                }
+            ciManagement {
+                system.set('GitHub Actions')
+                url.set("$repoUrl/actions")
             }
         }
     }
 
     repositories {
-//        final String url = isSnapshot ?
-//                "https://oss.sonatype.org/content/repositories/snapshots/" :
-//                "https://oss.sonatype.org/service/local/staging/deploy/maven2/";
-//        maven(url) {
-//            credentials(PasswordCredentials::class)
-//            name = "osshr"
-//        }
-
         maven {
-            name = 'ChrisCarini_LocalMavenRepo'
+            name = 'ChrisCarini_LocalMaven'
 
             def snapshotsRepoUrl = layout.buildDirectory.dir('repos/snapshots')
             def releasesRepoUrl = layout.buildDirectory.dir('repos/releases')
@@ -185,7 +186,7 @@ tasks {
     targetCompatibility = properties("javaVersion")
 
     // Set the respective compiler arguments to fail the build if there are warnings.
-    tasks.withType(JavaCompile) {
+    tasks.withType(JavaCompile).configureEach {
         options.compilerArgs.addAll([
                 '-Xlint:all',
                 '-Xlint:-options',
@@ -208,6 +209,16 @@ tasks.named('jar') {
     }
 }
 
+//// Uncomment to see the paths of where the `publish*PublicationToChrisCarini_LocalMavenRepository` tasks are publishing to.
+//project.tasks.withType(PublishToMavenRepository).all { task ->
+//    task.doLast {
+//        def baseUrl = "${task.repository.url}/${task.publication.groupId.replace('.', '/')}/${task.publication.artifactId}/${task.publication.version}/${task.publication.artifactId}"
+//        task.publication.artifacts.each { artifact ->
+//            println "${baseUrl}${artifact.classifier ? '-' + artifact.classifier : ''}.${artifact.extension}"
+//        }
+//    }
+//}
+
 java {
     withSourcesJar()
     withJavadocJar()
@@ -216,11 +227,16 @@ java {
 test {
     useTestNG()
     useJUnit()
+    finalizedBy jacocoTestReport
+}
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
 }
 
 dependencies {
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'
+    testImplementation "org.mockito:mockito-core:3.+"
 
     // This dependency is exported to consumers, that is to say found on their compile classpath.
     api 'org.apache.commons:commons-math3:3.6.1'

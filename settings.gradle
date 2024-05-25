@@ -8,4 +8,3 @@
  */
 
 rootProject.name = 'jetbrains-error-utils'
-include('jetbrains-error-utils')
