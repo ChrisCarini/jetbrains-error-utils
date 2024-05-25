@@ -1,0 +1,186 @@
+# GitHub Actions Workflow created for testing and preparing the library release in following steps:
+# - validate Gradle Wrapper,
+# - run test and build tasks,
+# - create a release.
+#
+# Workflow is triggered on push and pull_request events.
+#
+# Docs:
+# - GitHub Actions: https://help.github.com/en/actions
+
+name: Build
+on:
+  # Trigger the workflow on pushes to only the 'main' branch (this avoids duplicate checks being run e.g. for dependabot pull requests)
+  push:
+    branches: [ main ]
+
+  # Trigger the workflow on any pull request
+  pull_request:
+
+jobs:
+  files-changed:
+    uses: ./.github/workflows/files-changed.yaml
+
+  # Run Gradle Wrapper Validation Action to verify the wrapper's checksum
+  gradleValidation:
+    name: Gradle Wrapper
+    runs-on: ubuntu-latest
+    steps:
+
+      # Check out current repository
+      - name: Fetch Sources
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        timeout-minutes: 1
+
+      # Validate wrapper
+      - name: Gradle Wrapper Validation
+        uses: gradle/actions/wrapper-validation@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
+
+  # Run test & build Gradle tasks
+  test_and_build:            
+    name: Test & Build
+    needs: [ gradleValidation, files-changed ]
+    # If there are no changes in the changelog or there are changes in more than just the changelog, we want to run this job.
+    if: needs.files-changed.outputs.SKIP_CI == 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            runIde: |
+              Xvfb -ac :99 -screen 0 1920x1080x16 &
+              gradle runIdeForUiTests > gradle_runIdeForUiTests.log 2>&1 &
+          - os: windows-latest
+            runIde: start gradlew.bat runIdeForUiTests
+          - os: macos-latest
+            runIde: ./gradlew runIdeForUiTests &
+    runs-on: ${{ matrix.os }}
+    env:
+      DISPLAY: ":99.0"  # Used/needed by `Xvfb` on Linux, and in 'Run Tests' and 'Run Build' steps.
+    outputs:
+      version: ${{ steps.properties.outputs.version }}
+    steps:
+
+      # Check out current repository
+      - name: Fetch Sources
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        timeout-minutes: 1
+
+      # Setup Java 17 environment for the next steps
+      - name: Setup Java 17
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        timeout-minutes: 5
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: gradle
+
+      # Set environment variables
+      - name: Export Properties
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(./gradlew properties --console=plain -q)"
+          VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
+          CHANGELOG="$(./gradlew getChangelog --unreleased --no-header --no-empty-sections --no-links --console=plain -q)"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      # Run IDEA prepared for UI testing
+      - name: Run IDE
+        run: ${{ matrix.runIde }}
+
+      # Wait for IDEA to be started
+      - name: Health Check
+        uses: jtalk/url-health-check-action@v3
+        with:
+          url: http://127.0.0.1:8082
+          max-attempts: 6
+          retry-delay: 30s
+
+      # Run tests
+      - name: Run Tests
+        run: ./gradlew test
+
+      # Run build
+      - name: Run Build
+        run: |
+          ./gradlew build
+        env:
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_PWD: ${{ secrets.PGP_PWD }}
+        
+      # Collect Test Results
+      - name: Collect Test Results
+        if: ${{ success() || failure()}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-fails-report-${{ matrix.os }}
+          path: |
+            build/reports
+            gradle_runIdeForUiTests.log
+
+  # Prepare a release for GitHub Releases page
+  # Once (automatically) published, release workflow will be triggered
+  release:
+    name: Release
+    # If the event is *not* a PR, and there are no changes in the changelog or there are changes in more than just the changelog, we want to run this job.
+    if: github.event_name != 'pull_request' && needs.files-changed.outputs.SKIP_CI == 'false'
+    needs: [ test_and_build, files-changed ]
+    runs-on: ubuntu-latest
+    steps:
+
+      # Check out current repository
+      - name: Fetch Sources
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        timeout-minutes: 1
+
+      # Remove old release drafts by using the curl request for the available releases with draft flag
+      - name: Remove Old Release Drafts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/{owner}/{repo}/releases \
+            --jq '.[] | select(.draft == true) | .id' \
+            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
+
+      # Get latest release version
+      - name: Get latest release version
+        id: properties
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(gh api repos/{owner}/{repo}/releases --jq 'select(.[].draft == false) | first | .tag_name' | uniq | sed 's/v\(.*\)/\1/')"
+          echo "latest_release_version=$VERSION" | tee -a $GITHUB_OUTPUT
+
+      # Show Latest Released Version & Current Build Version
+      - name: Show Latest Released Version & Current Build Version
+        run: |
+          echo "Latest Released Version: [${{ steps.properties.outputs.latest_release_version }}] != Current Build Version: [${{ needs.test_and_build.outputs.version }}]"
+          echo "Not Equals: [${{ steps.properties.outputs.latest_release_version != needs.test_and_build.outputs.version }}]"
+      
+      # Create new release
+      - name: Create & Publish Release
+        # If the currently released (to GitHub) version differs from the current version that was just built, create and publish a new release
+        if: steps.properties.outputs.latest_release_version != needs.test_and_build.outputs.version
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN_FOR_IJ_UPDATE_ACTION }}
+        run: |
+          echo "Latest Released Version: [${{ steps.properties.outputs.latest_release_version }}] != Current Build Version: [${{ needs.test_and_build.outputs.version }}]"
+          gh release create v${{ needs.test_and_build.outputs.version }} \
+            --title "v${{ needs.test_and_build.outputs.version }}" \
+            --notes "$(cat << 'EOM'
+          ${{ needs.test_and_build.outputs.changelog }}
+          EOM
+          )"

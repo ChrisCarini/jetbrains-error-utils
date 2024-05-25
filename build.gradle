@@ -58,8 +58,18 @@ targetCompatibility = properties("javaVersion")
 // Disable all Gradle Tasks for the gradle-intellij-plugin as we only use the plugin for the dependencies
 project.gradle.taskGraph.whenReady { graph ->
     graph.allTasks.findAll { it.group == 'intellij' }.each {
-        // Skip the initializeIntelliJPlugin task as it is required for this library's tests to work
-        if (it.name == 'initializeIntelliJPlugin') {
+
+        if (it.name in [
+                // This task is required for this library's tests to work
+                'initializeIntelliJPlugin',
+
+                // This task is required for the UI tests to run. Without these, we can not run tests that 
+                // subclass off of {@link BasePlatformTestCase}.
+                'downloadRobotServerPlugin',
+                'instrumentedJar',
+                'prepareUiTestingSandbox',
+                'runIdeForUiTests',
+        ]) {
             logger.info('Skipping disabling \'org.jetbrains.intellij\' task: ' + it.name)
             return
         }
@@ -72,6 +82,11 @@ intellij {
     version.set(properties("platformVersion"))
     downloadSources.set(properties("platformDownloadSources").toBoolean())
     plugins.set(['org.jetbrains.plugins.github']) // Needed for the AuthenticatedGitHubErrorReportSubmitter
+
+    // Note: This gradle task is only needed if `SearchableConfigurable` is used, not `Configurable`. In this
+    //       library, we don't use that at all. Therefore, we disable this task.
+    //       See https://github.com/ChrisCarini/environment-variable-settings-summary-intellij-plugin/issues/9 for details.
+    buildSearchableOptions.enabled = false
 }
 /**
  * END ABOVE SECTION TAKEN FROM https://github.com/intellij-dlanguage/intellij-dlanguage (`:utils`, `:errorreporting`, and `:debugger` modules).
@@ -200,6 +215,13 @@ tasks {
                 '-Werror',
                 '-Xlint:-classfile'
         ]) //ignore warnings from dependencies
+    }
+    
+    runIdeForUiTests {
+        systemProperty("robot-server.port", "8082")
+        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
+        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
+        systemProperty("jb.consents.confirmation.enabled", "false")
     }
 }
 
