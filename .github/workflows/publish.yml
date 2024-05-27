@@ -30,16 +30,18 @@ jobs:
           distribution: zulu
           java-version: 17
           cache: gradle
+          
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@db19848a5fa7950289d3668fb053140cf3028d43 # v3.3.2
 
       - name: Publish package
-        uses: gradle/gradle-build-action@4c39dd82cd5e1ec7c6fa0173bb41b4b6bb3b86ff # v3.3.2
-        with:
-          arguments: publish
+        run: ./gradlew publish
         env:
           OSSRH_MAVEN_USERNAME: ${{ secrets.OSSRH_MAVEN_USERNAME }}
           OSSRH_MAVEN_PASSWORD: ${{ secrets.OSSRH_MAVEN_PASSWORD }}
           PGP_KEY: ${{ secrets.PGP_KEY }}
           PGP_PWD: ${{ secrets.PGP_PWD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

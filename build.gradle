@@ -172,6 +172,8 @@ publishing {
             def releasesRepoUrl = layout.buildDirectory.dir('repos/releases')
             url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
         }
+        
+        // https://docs.github.com/en/actions/publishing-packages/publishing-java-packages-with-gradle#publishing-packages-to-the-maven-central-repository
         if (System.getenv("OSSRH_MAVEN_USERNAME")) {
             maven {
                 name = "OSSRH"
@@ -182,6 +184,18 @@ publishing {
                 credentials {
                     username = System.getenv("OSSRH_MAVEN_USERNAME")
                     password = System.getenv("OSSRH_MAVEN_PASSWORD")
+                }
+            }
+        }
+
+        // https://docs.github.com/en/actions/publishing-packages/publishing-java-packages-with-gradle#publishing-packages-to-github-packages
+        if (System.getenv("GITHUB_TOKEN")) {
+            maven {
+                name = "GitHubPackages"
+                url = "https://maven.pkg.github.com/ChrisCarini/jetbrains-error-utils"
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
                 }
             }
         }
