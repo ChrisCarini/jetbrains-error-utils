@@ -2,14 +2,14 @@ package com.chriscarini.jetbrains.diagnostic.reporter.github;
 
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
 
 import java.awt.Component;
 import java.util.List;
 
 
-public class AnonymousGitHubErrorReportSubmitterTest extends HeavyPlatformTestCase {
+public class AnonymousGitHubErrorReportSubmitterTest extends BasePlatformTestCase {
 
     public static final Component PARENT_COMPONENT = new Component() {
         @Override

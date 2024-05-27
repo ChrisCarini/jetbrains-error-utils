@@ -2,7 +2,7 @@ package com.chriscarini.jetbrains.diagnostic.reporter.github;
 
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
 import org.mockito.Mockito;
 
@@ -10,7 +10,7 @@ import java.awt.*;
 import java.io.IOException;
 
 
-public class AnonymousGitHubErrorReportSubmitterTest2 extends HeavyPlatformTestCase {
+public class AnonymousGitHubErrorReportSubmitterTest2 extends BasePlatformTestCase {
     public void testSubmit() throws IOException {
         // given
         final AnonymousGitHubErrorReportSubmitter submitter = new AnonymousGitHubErrorReportSubmitter("https://TEST_URL", null, null, false);
