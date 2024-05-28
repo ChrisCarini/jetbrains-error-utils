@@ -5,6 +5,8 @@
  * For more details take a look at the 'Building Java & JVM projects' chapter in the Gradle
  * User Manual available at https://docs.gradle.org/7.5.1/userguide/building_java_projects.html
  */
+import java.util.regex.Pattern
+
 
 String properties(String key) { return project.findProperty(key).toString() }
 
@@ -101,6 +103,11 @@ final String repoUrl = "https://github.com/ChrisCarini/jetbrains-error-utils"
 // Note: Use all the defaults.
 changelog {
     repositoryUrl = repoUrl
+
+    // Custom regex to match the header of the changelog for 4-part versions
+    // NOTE: The addition is `(\.(0|[1-9]\d*))*` to allow for an optional 4th 
+    // part of the version.
+    headerParserRegex = Pattern.compile(/^((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\.(0|[1-9]\d*))*(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)${'$'}/)
 }
 
 idea {
