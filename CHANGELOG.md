@@ -50,6 +50,7 @@
 - Initial Revision. Laying the foundation.
 
 [Unreleased]: https://github.com/ChrisCarini/jetbrains-error-utils/compare/v0.0.4.0...HEAD
+[0.0.4.0]: https://github.com/ChrisCarini/jetbrains-error-utils/compare/v0.0.3-SNAPSHOT...v0.0.4.0
 [0.0.3-SNAPSHOT]: https://github.com/ChrisCarini/jetbrains-error-utils/compare/v0.0.2-SNAPSHOT...v0.0.3-SNAPSHOT
 [0.0.2-SNAPSHOT]: https://github.com/ChrisCarini/jetbrains-error-utils/compare/v0.0.1-SNAPSHOT...v0.0.2-SNAPSHOT
 [0.0.1-SNAPSHOT]: https://github.com/ChrisCarini/jetbrains-error-utils/commits/v0.0.1-SNAPSHOT
