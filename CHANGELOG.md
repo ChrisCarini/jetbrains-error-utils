@@ -14,6 +14,7 @@
 ### Removed
 
 ### Fixed
+- Handle when GitHub plugin is installed, but no GitHub accounts are configured
 
 ### Security
 

@@ -67,10 +67,7 @@ class AuthenticatedGitHubErrorReportSubmitter extends BaseGitHubErrorReportSubmi
     public @Nullable String getReporterAccount() {
         if (this.reporterGithubAccount == null) {
             final Project project = getLastFocusedOrOpenedProject();
-
-            final Set<GithubAccount> accounts = GHAccountsUtil.getAccounts();
-            final GithubAccount defaultAccount = GHAccountsUtil.getDefaultAccount(project);
-            this.reporterGithubAccount = defaultAccount != null ? defaultAccount : accounts.stream().findFirst().orElse(null);
+            this.reporterGithubAccount = GitHubUtils.getReporterGithubAccount(project);
         }
 
         return this.reporterGithubAccount != null ? String.format("%s/%s", this.reporterGithubAccount.getServer(), this.reporterGithubAccount.getName()) : null;

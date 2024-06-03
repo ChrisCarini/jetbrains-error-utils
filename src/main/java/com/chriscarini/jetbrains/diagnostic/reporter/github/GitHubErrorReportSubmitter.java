@@ -78,7 +78,7 @@ public class GitHubErrorReportSubmitter extends ErrorReportSubmitter {
         if (anonySubmitter == null) {
             anonySubmitter = new AnonymousGitHubErrorReportSubmitter(gitHubRepoUrl, assignees, labels, openReportInBrowser);
         }
-        if (authdSubmitter == null && isGitHubPluginInstalledAndEnabled()) {
+        if (authdSubmitter == null && isReadyForAuthenticatedGitHub()) {
             try {
                 authdSubmitter = new AuthenticatedGitHubErrorReportSubmitter(gitHubRepoUrl, assignees, labels, openReportInBrowser);
             } catch (NoClassDefFoundError e) {
@@ -90,7 +90,7 @@ public class GitHubErrorReportSubmitter extends ErrorReportSubmitter {
 
     private BaseGitHubErrorReportSubmitter getSubmitter() {
         initGithubErrorReportSubmitters();
-        if (isGitHubPluginInstalledAndEnabled() && authdSubmitter != null) {
+        if (isReadyForAuthenticatedGitHub() && authdSubmitter != null) {
             LOG.info("GitHub plugin is installed. Using authenticated submitter.");
             return authdSubmitter;
         } else {
@@ -99,7 +99,19 @@ public class GitHubErrorReportSubmitter extends ErrorReportSubmitter {
         }
     }
 
-    private static boolean isGitHubPluginInstalledAndEnabled() {
+    /**
+     * Determines if the environment is ready for authenticated GitHub issue submission.
+     * <p>
+     * The environment is ready if:
+     * <ol>
+     *     <li>The GitHub plugin is installed</li>
+     *     <li>The GitHub plugin is enabled</li>
+     *     <li>There is at least one valid GitHub account</li>
+     * </ol>
+     * </p>
+     * @return True if the environment is ready for authenticated GitHub issue submission. False otherwise.
+     */
+    private static boolean isReadyForAuthenticatedGitHub() {
         final String gitHubPluginId = "org.jetbrains.plugins.github";
 
         boolean isPluginInstalled = PluginUtils.isPluginInstalled(gitHubPluginId);
@@ -108,7 +120,10 @@ public class GitHubErrorReportSubmitter extends ErrorReportSubmitter {
         boolean isPluginEnabled = PluginUtils.isPluginEnabled(gitHubPluginId);
         LOG.info("GitHub plugin enabled: " + isPluginEnabled);
 
-        return isPluginInstalled && isPluginEnabled;
+        boolean isAnyValidGitHubAccount = GitHubUtils.isAnyValidGitHubReporterAccount();
+        LOG.info("Any valid GitHub account: " + isAnyValidGitHubAccount);
+
+        return isPluginInstalled && isPluginEnabled && isAnyValidGitHubAccount;
     }
 
     @Override
