@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- Set GitHub release to 'pre-release' when the version is a `SNAPSHOT` version
 
 ### Changed
 
