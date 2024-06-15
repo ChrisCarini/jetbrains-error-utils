@@ -8,6 +8,7 @@
 - Set GitHub release to 'pre-release' when the version is a `SNAPSHOT` version
 
 ### Changed
+- Upgrading IntelliJ from 2024.1.2 to 2024.1.3
 
 ### Deprecated
 
