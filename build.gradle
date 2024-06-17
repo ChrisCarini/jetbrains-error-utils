@@ -25,7 +25,7 @@ plugins {
     id 'org.jetbrains.changelog' version '2.2.0'
 
     // Add IJ gradle plugin in order to allow us to pull a dependency on IntelliJ platform.
-    id "org.jetbrains.intellij" version "1.17.3"
+    id "org.jetbrains.intellij" version "1.17.4"
 
     id 'jacoco'
 
