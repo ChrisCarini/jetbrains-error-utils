@@ -105,7 +105,7 @@ jobs:
         uses: jtalk/url-health-check-action@b716ccb6645355dd9fcce8002ce460e5474f7f00 # v4
         with:
           url: http://127.0.0.1:8082
-          max-attempts: 6
+          max-attempts: 12 # 2024-07-01 - ChrisCarini - bumping from 6 to 12; CI keeps failing with connection refused
           retry-delay: 30s
 
       # Run tests
