@@ -9,6 +9,7 @@
 
 ### Changed
 - Upgrading IntelliJ from 2024.1.5 to 2024.2.1
+- Upgrading IntelliJ from 2024.1.5 to 2024.2.0
 - Upgrading IntelliJ from 2024.1.4 to 2024.1.5
 - Upgrading IntelliJ from 2024.1.3 to 2024.1.4
 - Upgrading IntelliJ from 2024.1.2 to 2024.1.3
