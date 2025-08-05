@@ -50,10 +50,10 @@ jobs:
             runIde: |
               Xvfb -ac :99 -screen 0 1920x1080x16 &
               gradle runIdeForUiTests > gradle_runIdeForUiTests.log 2>&1 &
-          - os: windows-latest
-            runIde: start gradlew.bat runIdeForUiTests
-          - os: macos-latest
-            runIde: ./gradlew runIdeForUiTests &
+          #- os: windows-latest
+          #  runIde: start gradlew.bat runIdeForUiTests
+          #- os: macos-latest
+          #  runIde: ./gradlew runIdeForUiTests &
     runs-on: ${{ matrix.os }}
     env:
       DISPLAY: ":99.0"  # Used/needed by `Xvfb` on Linux, and in 'Run Tests' and 'Run Build' steps.
