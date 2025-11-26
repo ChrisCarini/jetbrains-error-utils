@@ -22,7 +22,7 @@ plugins {
 
     id 'signing'
 
-    id 'org.jetbrains.changelog' version '2.4.0'
+    id 'org.jetbrains.changelog' version '2.5.0'
 
     // Add IJ gradle plugin in order to allow us to pull a dependency on IntelliJ platform.
     id "org.jetbrains.intellij" version "1.17.4"
