@@ -34,7 +34,7 @@ jobs:
 
       # Validate wrapper
       - name: Gradle Wrapper Validation
-        uses: gradle/actions/wrapper-validation@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v4
+        uses: gradle/actions/wrapper-validation@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v4
 
   # Run test & build Gradle tasks
   test_and_build:            
@@ -92,7 +92,7 @@ jobs:
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-home-cache-cleanup: true
 
@@ -203,7 +203,7 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         if: steps.properties.outputs.latest_release_version != needs.test_and_build.outputs.version && contains(needs.test_and_build.outputs.version, '-SNAPSHOT')
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-home-cache-cleanup: true
           
