@@ -6,6 +6,7 @@
  * User Manual available at https://docs.gradle.org/7.5.1/userguide/building_java_projects.html
  */
 import java.util.regex.Pattern
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 
 String properties(String key) { return project.findProperty(key).toString() }
@@ -24,8 +25,12 @@ plugins {
 
     id 'org.jetbrains.changelog' version '2.5.0'
 
-    // Add IJ gradle plugin in order to allow us to pull a dependency on IntelliJ platform.
-    id "org.jetbrains.intellij" version "1.17.4"
+    // Add the IntelliJ Platform Gradle Plugin to pull a dependency on the IntelliJ Platform.
+    // We use the `.module` variant (not the full `org.jetbrains.intellij.platform` plugin) because this project
+    // is a *library* consumed by JetBrains plugins, not a plugin itself. The Module plugin provides the platform
+    // dependencies and test framework while omitting the plugin building/publishing/signing/verification tasks,
+    // which is exactly what we want (and replaces the manual task-disabling hack required with the 1.x plugin).
+    id "org.jetbrains.intellij.platform.module" version "2.16.0"
 
     id 'jacoco'
 
@@ -44,57 +49,14 @@ group properties("libraryGroup")
 version properties("libraryVersion")
 ext.isSnapshot = version.endsWith('-SNAPSHOT')
 
-sourceCompatibility = properties("javaVersion")
-targetCompatibility = properties("javaVersion")
-
 /**
- * #####################################################################################################################
- * #####################################################################################################################
+ * The IntelliJ Platform dependency (and the bundled GitHub plugin + test framework) is declared in the
+ * `repositories {}` and `dependencies {}` blocks below, per the IntelliJ Platform Gradle Plugin 2.x DSL.
  *
- * BELOW SECTION TAKEN FROM https://github.com/intellij-dlanguage/intellij-dlanguage (`:utils`, `:errorreporting`, and `:debugger` modules).
- *
- * Ultimately, this just disables all the gradle tasks provided by the 'org.jetbrains.intellij' gradle plugin, as we only
- * want this plugin for the dependencies.
- */
-
-// Disable all Gradle Tasks for the gradle-intellij-plugin as we only use the plugin for the dependencies
-project.gradle.taskGraph.whenReady { graph ->
-    graph.allTasks.findAll { it.group == 'intellij' }.each {
-
-        if (it.name in [
-                // This task is required for this library's tests to work
-                'initializeIntelliJPlugin',
-
-                // This task is required for the UI tests to run. Without these, we can not run tests that 
-                // subclass off of {@link BasePlatformTestCase}.
-                'downloadRobotServerPlugin',
-                'instrumentedJar',
-                'prepareUiTestingSandbox',
-                'runIdeForUiTests',
-        ]) {
-            logger.info('Skipping disabling \'org.jetbrains.intellij\' task: ' + it.name)
-            return
-        }
-        logger.info('Disabling \'org.jetbrains.intellij\' task: ' + it.name)
-        it.enabled = false
-    }
-}
-
-intellij {
-    version.set(properties("platformVersion"))
-    downloadSources.set(properties("platformDownloadSources").toBoolean())
-    plugins.set(['org.jetbrains.plugins.github']) // Needed for the AuthenticatedGitHubErrorReportSubmitter
-
-    // Note: This gradle task is only needed if `SearchableConfigurable` is used, not `Configurable`. In this
-    //       library, we don't use that at all. Therefore, we disable this task.
-    //       See https://github.com/ChrisCarini/environment-variable-settings-summary-intellij-plugin/issues/9 for details.
-    buildSearchableOptions.enabled = false
-}
-/**
- * END ABOVE SECTION TAKEN FROM https://github.com/intellij-dlanguage/intellij-dlanguage (`:utils`, `:errorreporting`, and `:debugger` modules).
- *
- * #####################################################################################################################
- * #####################################################################################################################
+ * NOTE: With the 1.x `org.jetbrains.intellij` plugin we had to manually disable all of its `intellij`-group
+ *       tasks (buildPlugin, signPlugin, etc.) because we only wanted the platform dependencies. The 2.x
+ *       `org.jetbrains.intellij.platform.module` plugin does not register those plugin-building tasks at all,
+ *       so that workaround is no longer necessary.
  */
 
 final String repoUrl = "https://github.com/ChrisCarini/jetbrains-error-utils"
@@ -112,12 +74,17 @@ changelog {
 
 idea {
     module {
-        jdkName = '17'
+        jdkName = '21'
     }
 }
 
 repositories {
     mavenCentral()
+
+    // Required by the IntelliJ Platform Gradle Plugin (2.x) to resolve the IntelliJ Platform and bundled plugins.
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 publishing {
@@ -221,9 +188,6 @@ signing {
 }
 
 tasks {
-    sourceCompatibility = properties("javaVersion")
-    targetCompatibility = properties("javaVersion")
-
     // Set the respective compiler arguments to fail the build if there are warnings.
     tasks.withType(JavaCompile).configureEach {
         options.compilerArgs.addAll([
@@ -237,16 +201,15 @@ tasks {
                 '-Xlint:-classfile'
         ]) //ignore warnings from dependencies
     }
-    
-    runIdeForUiTests {
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
-    }
 }
 
 tasks.named('jar') {
+    // The IntelliJ Platform Gradle Plugin assigns the `jar` task a 'base' archive classifier (reserving the
+    // unclassified name for its plugin-distribution `composedJar`). Since this project publishes a plain library
+    // via `components.java`, reset the classifier so the primary Maven artifact keeps its conventional name
+    // (`<artifact>-<version>.jar`) and remains resolvable by Maven (POM-only) consumers.
+    archiveClassifier = ''
+
     manifest {
         attributes(
                 'Implementation-Title': project.name,
@@ -266,6 +229,10 @@ tasks.named('jar') {
 //}
 
 java {
+    // In Gradle 9 the legacy project-level `sourceCompatibility`/`targetCompatibility` convention properties
+    // were removed, so configure them on the `java` extension instead.
+    sourceCompatibility = properties("javaVersion")
+    targetCompatibility = properties("javaVersion")
     withSourcesJar()
     withJavadocJar()
 }
@@ -280,6 +247,19 @@ jacocoTestReport {
 }
 
 dependencies {
+    intellijPlatform {
+        // The IntelliJ Platform to compile & test against. Driven by `platformVersion` in gradle.properties.
+        // `intellijIdea` resolves the (unified, 2025.3+) IntelliJ IDEA distribution.
+        intellijIdea(properties("platformVersion"))
+
+        // Needed for the AuthenticatedGitHubErrorReportSubmitter
+        bundledPlugin("org.jetbrains.plugins.github")
+
+        // Since 2.x, an explicit test framework dependency is required to run tests that subclass
+        // com.intellij.testFramework.fixtures.BasePlatformTestCase
+        testFramework(TestFrameworkType.Platform.INSTANCE)
+    }
+
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13.2'
     testImplementation "org.mockito:mockito-core:5.+"

@@ -118,9 +118,9 @@ class AuthenticatedGitHubErrorReportSubmitter extends BaseGitHubErrorReportSubmi
                 if (token == null) {
                     return;
                 }
-                final GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token);
-
                 final GithubServerPath server = new GithubServerPath(GithubServerPath.from(repoUrl).getHost());
+                final GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(server, token);
+
                 final GHRepositoryPath repositoryPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(repoUrl);
                 if (repositoryPath == null) {
                     LOG.warn("Failed to get repository path from URL: " + repoUrl);

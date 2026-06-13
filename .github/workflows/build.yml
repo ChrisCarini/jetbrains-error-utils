@@ -47,16 +47,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            runIde: |
-              Xvfb -ac :99 -screen 0 1920x1080x16 &
-              gradle runIdeForUiTests > gradle_runIdeForUiTests.log 2>&1 &
           #- os: windows-latest
-          #  runIde: start gradlew.bat runIdeForUiTests
           #- os: macos-latest
-          #  runIde: ./gradlew runIdeForUiTests &
     runs-on: ${{ matrix.os }}
     env:
-      DISPLAY: ":99.0"  # Used/needed by `Xvfb` on Linux, and in 'Run Tests' and 'Run Build' steps.
+      DISPLAY: ":99.0"  # Used by Xvfb on Linux to give the IntelliJ Platform test fixtures a display (see 'Start Xvfb').
     outputs:
       version: ${{ steps.properties.outputs.version }}
     steps:
@@ -66,13 +61,13 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         timeout-minutes: 1
 
-      # Setup Java 17 environment for the next steps
-      - name: Setup Java 17
+      # Setup Java 21 environment for the next steps
+      - name: Setup Java 21
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         timeout-minutes: 5
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       # Set environment variables
@@ -96,17 +91,10 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
-      # Run IDEA prepared for UI testing
-      - name: Run IDE
-        run: ${{ matrix.runIde }}
-
-      # Wait for IDEA to be started
-      - name: Health Check
-        uses: jtalk/url-health-check-action@e7d5ebdc9027fbf494d2d034f3e8fc78f8b7a2b9 # v5
-        with:
-          url: http://127.0.0.1:8082
-          max-attempts: 12 # 2024-07-01 - ChrisCarini - bumping from 6 to 12; CI keeps failing with connection refused
-          retry-delay: 30s
+      # Start a virtual framebuffer so the IntelliJ Platform test fixtures have a display on headless Linux CI.
+      - name: Start Xvfb
+        if: runner.os == 'Linux'
+        run: Xvfb -ac :99 -screen 0 1920x1080x16 &
 
       # Run tests
       - name: Run Tests
@@ -125,10 +113,9 @@ jobs:
         if: ${{ success() || failure()}}
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: ui-test-fails-report-${{ matrix.os }}
+          name: test-reports-${{ matrix.os }}
           path: |
             build/reports
-            gradle_runIdeForUiTests.log
 
   # Prepare a release for GitHub Releases page
   # Once (automatically) published, release workflow will be triggered
@@ -190,14 +177,14 @@ jobs:
       # NOTE: SonaType staging repository is used for SNAPSHOT versions; see build.gradle for logic to point at staging repo.
       ###
       
-      # Setup Java 17 environment for the next steps
-      - name: Setup Java 17
+      # Setup Java 21 environment for the next steps
+      - name: Setup Java 21
         if: steps.properties.outputs.latest_release_version != needs.test_and_build.outputs.version && contains(needs.test_and_build.outputs.version, '-SNAPSHOT')
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         timeout-minutes: 5
         with:
           distribution: zulu
-          java-version: 17
+          java-version: 21
           cache: gradle
           
       # Setup Gradle
