@@ -8,6 +8,7 @@
 - Set GitHub release to 'pre-release' when the version is a `SNAPSHOT` version
 
 ### Changed
+- Migrate the IntelliJ Platform Gradle Plugin from `org.jetbrains.intellij` `1.17.4` to `org.jetbrains.intellij.platform` (module) `2.16.0` (compatible with Gradle 9)
 - Upgrading IntelliJ from 2026.1.2 to 2026.1.3
 - Upgrading IntelliJ from 2026.1.1 to 2026.1.2
 - Upgrading IntelliJ from 2026.1 to 2026.1.1

@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -58,8 +57,7 @@ public final class PluginUtils {
      * @return true if the plugin is enabled; false if the plugin is not enabled
      */
     public static boolean isPluginEnabled(@NotNull final String pluginId) {
-        @Nullable final IdeaPluginDescriptor pluginDescriptor = getPlugin(pluginId);
-        return pluginDescriptor != null && pluginDescriptor.isEnabled();
+        return getPlugin(pluginId) != null && !PluginManagerCore.isDisabled(getPluginId(pluginId));
     }
 
     private static @NotNull PluginId getPluginId(@NotNull final String pluginId) {
