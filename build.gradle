@@ -30,7 +30,7 @@ plugins {
     // is a *library* consumed by JetBrains plugins, not a plugin itself. The Module plugin provides the platform
     // dependencies and test framework while omitting the plugin building/publishing/signing/verification tasks,
     // which is exactly what we want (and replaces the manual task-disabling hack required with the 1.x plugin).
-    id "org.jetbrains.intellij.platform.module" version "2.18.0"
+    id "org.jetbrains.intellij.platform.module" version "2.18.1"
 
     id 'jacoco'
 
