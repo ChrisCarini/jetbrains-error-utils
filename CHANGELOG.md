@@ -8,6 +8,7 @@
 - Set GitHub release to 'pre-release' when the version is a `SNAPSHOT` version
 
 ### Changed
+- Upgrading IntelliJ from 2026.1.4 to 2026.2.0.1
 - Upgrading IntelliJ from 2026.1.3 to 2026.1.4
 - Bump the JDK used to build/test from 17 to 21 (required by IntelliJ Platform 2025.3+)
 - Migrate the IntelliJ Platform Gradle Plugin from `org.jetbrains.intellij` `1.17.4` to `org.jetbrains.intellij.platform` (module) `2.16.0` (compatible with Gradle 9)
