@@ -111,7 +111,7 @@ jobs:
       # Collect Test Results
       - name: Collect Test Results
         if: ${{ success() || failure()}}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: test-reports-${{ matrix.os }}
           path: |
